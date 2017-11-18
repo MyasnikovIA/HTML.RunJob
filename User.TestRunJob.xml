@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2017.1 (Build 792)" ts="2017-11-18 21:56:00">
+<Class name="User.TestRunJob">
+<Super>%CSP.Page</Super>
+<TimeChanged>64605,78430.627356</TimeChanged>
+<TimeCreated>64605,50522.947038</TimeCreated>
+
+<Method name="OnPage">
+<ClassMethod>1</ClassMethod>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	&html<
+	  <script language="JavaScript" type="text/javascript" src="HTML.RunJob.cls"></script>
+	  <button onclick='runProcess()'>Запустить процесс</button>
+	  <button onclick='KillProcess()'>Уничтожить процесс</button>
+	  <br><progress id='progress' value="0" max="100" style='width:100%'></progress>
+	  <br>
+	  <div id='FrmCache'>FrmCache</div>
+	  <br>
+	  <br>
+	  <div id='demo'>eee</div>
+	  <br>
+	  <script type="text/javascript" >
+	  
+	  /// функция срабатывает по окончанию работы процесса
+	  CalBackFun=function(arg){
+		  // document.getElementById("FrmCache").innerHTML =JSON.stringify(arg);
+          document.getElementById("demo").innerHTML='';
+          if (''+arg=={}){
+		     alert('Работа закончена')
+          }
+          document.getElementById("progress").value=0;
+	  }
+	  
+	  /// функция обработки запроса состояния работы процесса
+	  ProgressFun=function(arg){
+         document.getElementById("demo").innerHTML='Wor progress:'+JSON.stringify(arg);
+         if (arg.js!=undefined){  eval(arg.js);    }
+	  }
+	  
+	  /// Параметры оработки запроса
+	  var param=[CalBackFun,ProgressFun,"MYJoB",1000];
+	  /// запуск процесса повторно после перезагрузки страницы
+	  refJob(param);
+	  
+
+	  
+	  runProcess=function(){
+	     var res=callJob("..Test",param);
+	     document.getElementById("demo").innerHTML=res;
+	  }
+	  
+	  KillProcess=function(){
+		  killJob("MYJoB") ;
+	  }
+	  
+	 </script>
+	>
+	w ##class(%SYS.System).InstanceGUID()
+	Quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="Test">
+<ClassMethod>1</ClassMethod>
+<Implementation><![CDATA[
+	
+	; %runjob - имя глобала , через который происходит обмен Web морды и Cache` процесса
+    s count=1000
+    for a=1:1:count {   
+	   h 1
+       s @%runjob@("info")= " Счетчик внутри процесса "_a
+       s val=100/count*a
+       s jsCode=""
+       s jsCode=jsCode_" document.getElementById(""progress"").max = "_count_"; "
+       s jsCode=jsCode_" document.getElementById(""progress"").value = "_a_"; "
+       s jsCode=jsCode_" document.getElementById(""FrmCache"").innerHTML ="""_$ZDT($h)_" - "_a_"  "_val_"%"" "
+       ; s @%runjob@("eval")=jsCode
+       s @%runjob@("js")=jsCode
+    }
+	w $zdt($h)
+	s @%runjob@("OK")=1 ; сообщаем Web морде о том, что процесс закончен корректно
+	q
+]]></Implementation>
+</Method>
+</Class>
+</Export>
