@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2017.1 (Build 792)" ts="2017-11-19 01:15:13">
-<Class name="HTML.RunJob">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2017.1 (Build 792)" ts="2017-11-19 01:14:53">
+<Class name="%ZHTML.RunJob">
 <Description><![CDATA[
 <br>Скрипт(JS): 
-<br> &lt;script  type="text/javascript"  src='HTML.RunJob.cls'&gt;&lt;/script&gt; 
+<br> &lt;script  type="text/javascript"  src='%25ZHTML.RunJob.cls'&gt;&lt;/script&gt; 
 <br> 
-<br> <!--  <script language="JavaScript" type="text/javascript" src="HTML.RunJob.cls"></script>  -->]]></Description>
+<br> <!--  <script language="JavaScript" type="text/javascript" src="%25ZHTML.RunJob.cls"></script>  -->]]></Description>
 <Super>%CSP.Page</Super>
-<TimeChanged>64606,3867.949387</TimeChanged>
-<TimeCreated>64605,43371.707664</TimeCreated>
+<TimeChanged>64606,4038.795657</TimeChanged>
+<TimeCreated>64606,1224.985581</TimeCreated>
 
 <Method name="ExecFrag">
 <Description>
@@ -209,7 +209,7 @@
      }  
    
      ; Выводим JS функции библиотеки
-     s ParentClassName1="HTML.RunJob"
+     s ParentClassName1="%ZHTML.RunJob"
      s MethodName="InitPreRunJob"
      for ind=1:1:^oddDEF(ParentClassName1,"m",MethodName,30) {
         d ..ExecFrag(^oddDEF(ParentClassName1,"m",MethodName,30,ind),"/*(",")*/") 
@@ -372,11 +372,11 @@ errRunJob
           }
        }
        var requestRunJob = new XMLHttpRequest();
-       requestRunJob.open('GET', 'HTML.RunJob.cls/?cspRunJobTest='+encodeURIComponent(GlobalIDString), false);
+       requestRunJob.open('GET', '%25ZHTML.RunJob.cls/?cspRunJobTest='+encodeURIComponent(GlobalIDString), false);
        requestRunJob.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
        requestRunJob.send(''); 
        if (requestRunJob.responseText=="OK") {
-          requestRunJob.open('POST', 'HTML.RunJob.cls/?cspIntRunJob='+GlobalIDString, false);
+          requestRunJob.open('POST', '%25ZHTML.RunJob.cls/?cspIntRunJob='+GlobalIDString, false);
           requestRunJob.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
           requestRunJob.send(data); 
           requestRunJob.ontimeout = function (e) {
@@ -426,7 +426,7 @@ errRunJob
           function runJobLocalLoop() {
            var ProgressObject={};
            ProgressObject['OK']=0;
-           requestLoop.open('GET', 'HTML.RunJob.cls/?cspRunJobStatus='+encodeURIComponent(GlobalIDString), false);
+           requestLoop.open('GET', '%25ZHTML.RunJob.cls/?cspRunJobStatus='+encodeURIComponent(GlobalIDString), false);
            requestLoop.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
            requestLoop.send(''); 
            if (requestLoop.responseText.length==0){   FunCallBack({"error":"Работа процесса прервана"});    clearTimeout(myVarsetInterval);  return;  }
@@ -453,7 +453,7 @@ errRunJob
      killJob=function(GlobalIDString){
         var ProgressObject={};
         var requestRunJob = new XMLHttpRequest();
-        requestRunJob.open('GET', 'HTML.RunJob.cls/?cspKillRunJob='+GlobalIDString, false);
+        requestRunJob.open('GET', '%25ZHTML.RunJob.cls/?cspKillRunJob='+GlobalIDString, false);
         requestRunJob.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
         requestRunJob.send(''); 
         if (requestRunJob.responseText.length==0){  return {};  }

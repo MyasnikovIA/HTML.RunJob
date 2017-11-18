@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2017.1 (Build 792)" ts="2017-11-18 21:56:00">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2017.1 (Build 792)" ts="2017-11-19 01:15:35">
 <Class name="User.TestRunJob">
 <Super>%CSP.Page</Super>
-<TimeChanged>64605,78430.627356</TimeChanged>
+<TimeChanged>64606,1477.001972</TimeChanged>
 <TimeCreated>64605,50522.947038</TimeCreated>
 
 <Method name="OnPage">
 <ClassMethod>1</ClassMethod>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
+	 ;  <!--script language="JavaScript" type="text/javascript" src="HTML.RunJob.cls"></script-->
+     ; <script language="JavaScript" type="text/javascript" src="%25ZHTML.RunJob.cls"></script> 
+	  
 	&html<
-	  <script language="JavaScript" type="text/javascript" src="HTML.RunJob.cls"></script>
+      <script language="JavaScript" type="text/javascript" src="HTML.RunJob.cls"></script>
 	  <button onclick='runProcess()'>Запустить процесс</button>
 	  <button onclick='KillProcess()'>Уничтожить процесс</button>
 	  <br><progress id='progress' value="0" max="100" style='width:100%'></progress>
@@ -70,7 +73,7 @@
     for a=1:1:count {   
 	   h 1
        s @%runjob@("info")= " Счетчик внутри процесса "_a
-       s val=100/count*a
+       s val=100\count*a
        s jsCode=""
        s jsCode=jsCode_" document.getElementById(""progress"").max = "_count_"; "
        s jsCode=jsCode_" document.getElementById(""progress"").value = "_a_"; "
