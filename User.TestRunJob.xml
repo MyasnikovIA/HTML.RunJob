@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2017.1 (Build 792)" ts="2017-11-19 01:15:35">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2017.1 (Build 792)" ts="2017-11-19 11:16:24">
 <Class name="User.TestRunJob">
 <Super>%CSP.Page</Super>
-<TimeChanged>64606,1477.001972</TimeChanged>
+<TimeChanged>64606,40521.509048</TimeChanged>
 <TimeCreated>64605,50522.947038</TimeCreated>
 
 <Method name="OnPage">
 <ClassMethod>1</ClassMethod>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
-	 ;  <!--script language="JavaScript" type="text/javascript" src="HTML.RunJob.cls"></script-->
-     ; <script language="JavaScript" type="text/javascript" src="%25ZHTML.RunJob.cls"></script> 
+	 ;  <script language="JavaScript" type="text/javascript" src="HTML.RunJob.cls"></script>
+     ;  <script language="JavaScript" type="text/javascript" src="%25ZHTML.RunJob.cls"></script> 
 	  
 	&html<
       <script language="JavaScript" type="text/javascript" src="HTML.RunJob.cls"></script>
@@ -25,13 +25,18 @@
 	  <br>
 	  <script type="text/javascript" >
 	  
+	  // Синхронный запуск класс метода
+	  // alert(callJob("..Test2"));
+
+	  // Синхронный запуск класс метода(Полный путьм к классметоду)
+	  alert(callJob("User.TestRunJob.Test2"));
+	  
+	  
 	  /// функция срабатывает по окончанию работы процесса
 	  CalBackFun=function(arg){
 		  // document.getElementById("FrmCache").innerHTML =JSON.stringify(arg);
           document.getElementById("demo").innerHTML='';
-          if (''+arg=={}){
-		     alert('Работа закончена')
-          }
+          if (''+arg=={}){     alert('Работа закончена')    }
           document.getElementById("progress").value=0;
 	  }
 	  
@@ -61,6 +66,12 @@
 	>
 	w ##class(%SYS.System).InstanceGUID()
 	Quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="Test2">
+<ClassMethod>1</ClassMethod>
+<Implementation><![CDATA[	w $ZDT($h)
 ]]></Implementation>
 </Method>
 
