@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2017.1 (Build 792)" ts="2017-11-19 11:16:19">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2017.1 (Build 792)" ts="2017-11-19 15:14:53">
 <Class name="HTML.RunJob">
 <Description><![CDATA[
 <br>Скрипт(JS): 
@@ -7,7 +7,7 @@
 <br> 
 <br> <!--  <script language="JavaScript" type="text/javascript" src="HTML.RunJob.cls"></script>  -->]]></Description>
 <Super>%CSP.Page</Super>
-<TimeChanged>64606,40365.072191</TimeChanged>
+<TimeChanged>64606,54743.839327</TimeChanged>
 <TimeCreated>64605,43371.707664</TimeCreated>
 
 <Method name="ExecFrag">
@@ -42,12 +42,11 @@
           if %response.ContentType="text/html" {
             Do %response.SetHeader("Content-Type","text/plain")   
           }
-         q 1   
+          q 1   
      }
      if $d(%request.Data("cspIntRunJob")){             Do %response.SetHeader("Content-Type","application/javascript")  q 1  }
      if $d(%request.Data("cspRunJobStatus")){  Do %response.SetHeader("Content-Type","application/javascript")  q 1  } 
      if $d(%request.Data("cspKillRunJob")){       Do %response.SetHeader("Content-Type","application/javascript")  q 1  }
-
      Do %response.SetHeader("Content-Type","application/javascript")   
      q 1
 ]]></Implementation>
