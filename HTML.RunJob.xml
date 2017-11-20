@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2017.1 (Build 792)" ts="2017-11-19 16:26:00">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2013.1.4 (Build 801)" ts="2017-11-20 14:05:44">
 <Class name="HTML.RunJob">
 <Description><![CDATA[
 <br>Скрипт(JS): 
@@ -7,7 +7,7 @@
 <br> 
 <br> <!--  <script language="JavaScript" type="text/javascript" src="HTML.RunJob.cls"></script>  -->]]></Description>
 <Super>%CSP.Page</Super>
-<TimeChanged>64606,58607.392928</TimeChanged>
+<TimeChanged>64607,50638.883453</TimeChanged>
 <TimeCreated>64605,43371.707664</TimeCreated>
 
 <Method name="ExecFrag">
@@ -42,11 +42,12 @@
           if %response.ContentType="text/html" {
             Do %response.SetHeader("Content-Type","text/plain")   
           }
-          q 1   
+         q 1   
      }
-     if $d(%request.Data("cspIntRunJob")){             Do %response.SetHeader("Content-Type","application/javascript")  q 1  }
+     if $d(%request.Data("cspIntRunJob")){     Do %response.SetHeader("Content-Type","application/javascript")  q 1  }
      if $d(%request.Data("cspRunJobStatus")){  Do %response.SetHeader("Content-Type","application/javascript")  q 1  } 
-     if $d(%request.Data("cspKillRunJob")){       Do %response.SetHeader("Content-Type","application/javascript")  q 1  }
+     if $d(%request.Data("cspKillRunJob")){    Do %response.SetHeader("Content-Type","application/javascript")  q 1  }
+
      Do %response.SetHeader("Content-Type","application/javascript")   
      q 1
 ]]></Implementation>
@@ -58,9 +59,10 @@
 <Implementation><![CDATA[
     #define cspEncode(%k,%d)      $translate($System.Encryption.AESBase64Encode(%d,%k),"+=/"_$char(32,13,10),"_-$") 
     #define cspDecode(%k,%d)      $System.Encryption.AESBase64Decode($translate(%d,"_-$","+=/"),%k) 
-    s I=$ZU(111,0)   
-    s %ClientIP=$A(I,1)_"."_$A(I,2)_"."_$A(I,3)_"."_$A(I,4)
-    k I
+    ; s I=$ZU(111,0)   
+    ; s %ClientIP=$A(I,1)_"."_$A(I,2)_"."_$A(I,3)_"."_$A(I,4)
+    ; k I
+    s %ClientIP= $ZU(67, 15, $job)
     if $d(%request.Data("cspIntRunMethod")){       
 	    s WEVENT=%request.Get("WEVENT","")
 	    if $l(WEVENT,".")=1 {
@@ -81,6 +83,7 @@
         Quit $$$OK
      }    
     
+    
     if $d(%request.Data("cspgetAllJobList")){  
         s gl="^mtempRunJob"
       
@@ -96,13 +99,13 @@
         s %RunJobId =%request.Get("cspRunJobTest","")
         if %RunJobId="" { w "OK" q $$$OK }
         s gl="^mtempRunJob("""_%ClientIP_""","""_%RunJobId_""")"
+        if $d(@gl@("OK")),@gl@("OK")=0 {  
+            w "NO OK" q $$$OK 
+        }
         if $d(@gl@("JOB")),@gl@("JOB")=0 {  
           if $DATA(^$JOB(@gl@("JOB"))) {
             w "NO OK" q $$$OK 
           }
-        }
-        if $d(@gl@("OK")),@gl@("OK")=0 {  
-            w "NO OK" q $$$OK 
         }
         k @gl
         w "OK"
@@ -110,7 +113,6 @@
     }
     
     if $d(%request.Data("cspIntRunJob")){       
-         d ..KillLOldGlobal()
          s WEVENT=%request.Get("WEVENT","")
          if $l(WEVENT,".")=1 {
            s WEVENT=$lg($$$cspDecode(%session.Key,WEVENT),1) 
@@ -130,13 +132,15 @@
         if %RunJobId="" {
            s %RunJobId=$JOB_$tr($h,",")
         }
+         d ..KillLOldGlobal(%RunJobId)
+        
         s gl="^mtempRunJob("""_%ClientIP_""","""_%RunJobId_""")"
         ; Запрещаем повторный запуск классметода в паралельном процессе
          if $d(@gl@("GBL")),@gl@("OK")=0 {
            w %RunJobId    
            Quit $$$OK
          }else{
-           k @gl
+           ; k @gl
          }
         d ..ExecRunJobMethod(gl)
         s %runjob="^mtempRunJob("""_%ClientIP_""","""_%RunJobId_""")"
@@ -172,7 +176,7 @@
                  Quit $$$OK 
                }
                w "{""error"":""Процесс с номером "_@gl@("JOB")_" в системе не найден. "",""OK""=-1}"
-               ; k @gl
+               k @gl
                Quit $$$OK 
         }
         s @gl@("DatTim")=$ZDT($h)
@@ -214,12 +218,11 @@
 	       w """"_$ZCVT(ind,"o","JS")_""":"""_$ZCVT(@gl@(ind),"o","JS")_""""
         }
         w "}"
-        ; k @gl             
         Quit $$$OK
      }  
    
      ; Выводим JS функции библиотеки
-     s ParentClassName1="%ZHTML.RunJob"
+     s ParentClassName1="HTML.RunJob"
      s MethodName="InitPreRunJob"
      for ind=1:1:^oddDEF(ParentClassName1,"m",MethodName,30) {
         d ..ExecFrag(^oddDEF(ParentClassName1,"m",MethodName,30,ind),"/*(",")*/") 
@@ -310,6 +313,7 @@
    s @gl@("Tim")=$p($h,",",2)
    s @gl@("OK")=0
    s %runjob=gl
+   s ^deb($job)=gl
  s $ZTRAP="errRunJob"
    set args=@gl@("args")
    for numArg=1:1:@gl@("args") {
@@ -335,8 +339,9 @@ errRunJob
 <Description>
 Удаление старых глобалов</Description>
 <ClassMethod>1</ClassMethod>
+<FormalSpec>RunJobId</FormalSpec>
 <Implementation><![CDATA[
-       s gl="^mtempRunJob"
+       s gl="^mtempRunJob("""_%ClientIP_""","""_RunJobId_""")"
        s ind=""
        for  {
           s ind=$o(@gl@(ind))
@@ -358,7 +363,7 @@ errRunJob
 <WebMethod>1</WebMethod>
 <ClientMethod>1</ClientMethod>
 <Implementation><![CDATA[
-     // var ClientIP="/*( s I=$ZU(111,0)  w $A(I,1)_"."_$A(I,2)_"."_$A(I,3)_"."_$A(I,4) k I )*/";
+    //ddd var ClientIP="/*( s I=$ZU(111,0)  w $A(I,1)_"."_$A(I,2)_"."_$A(I,3)_"."_$A(I,4) k I )*/";
      var IntervalRunJobMilSec=2000;
      callJob=function(MethodName){
        var GlobalIDString="";
@@ -433,8 +438,6 @@ errRunJob
              LoopProgress(FunCallBack,FunProgress,GlobalIDString,IntervalRunJobMilSec);
            }
        }else{
-         
-               
            var requestRunJob = new XMLHttpRequest();
            requestRunJob.open('POST', 'HTML.RunJob.cls/?cspIntRunMethod=1', false);
            requestRunJob.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
@@ -523,6 +526,7 @@ errRunJob
         }
         return ProgressObject;
      }
+     
      
      /// Получить список запущеных процессов
      getJobList=function(){
