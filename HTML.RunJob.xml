@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2013.1.4 (Build 801)" ts="2017-11-20 16:53:48">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2017.1 (Build 792)" ts="2017-11-20 21:57:32">
 <Class name="HTML.RunJob">
 <Description><![CDATA[
 <br>Скрипт(JS): 
@@ -7,7 +7,7 @@
 <br> 
 <br> <!--  <script language="JavaScript" type="text/javascript" src="HTML.RunJob.cls"></script>  -->]]></Description>
 <Super>%CSP.Page</Super>
-<TimeChanged>64607,58837.479844</TimeChanged>
+<TimeChanged>64607,78134.255857</TimeChanged>
 <TimeCreated>64605,43371.707664</TimeCreated>
 
 <Method name="ExecFrag">
@@ -37,7 +37,7 @@
 <ClassMethod>1</ClassMethod>
 <ReturnType>%Library.Boolean</ReturnType>
 <Implementation><![CDATA[
-     s %response.CharSet="CP1251"
+     ; s %response.CharSet="CP1251"
      if %request.Get("cspIntRunMethod",0)=1 {
           if %response.ContentType="text/html" {
             Do %response.SetHeader("Content-Type","text/plain")   
@@ -59,9 +59,9 @@
 <Implementation><![CDATA[
     #define cspEncode(%k,%d)      $translate($System.Encryption.AESBase64Encode(%d,%k),"+=/"_$char(32,13,10),"_-$") 
     #define cspDecode(%k,%d)      $System.Encryption.AESBase64Decode($translate(%d,"_-$","+=/"),%k) 
-    ; s I=$ZU(111,0)   
-    ; s  %ClientIP=$A(I,1)_"."_$A(I,2)_"."_$A(I,3)_"."_$A(I,4)
-    ; k I
+   ;  s I=$ZU(111,0)   
+   ;  s %ClientIP=$A(I,1)_"."_$A(I,2)_"."_$A(I,3)_"."_$A(I,4)
+   ;  k I
     s %ClientIP= $ZU(67, 15, $job)
     if $d(%request.Data("cspIntRunMethod")){       
 	    s WEVENT=%request.Get("WEVENT","")
@@ -86,12 +86,29 @@
     
     if $d(%request.Data("cspgetAllJobList")){  
         s gl="^mtempRunJob"
-      
        Quit $$$OK
     }
  
     if $d(%request.Data("cspgetJobList")){  
         s gl="^mtempRunJob("""_%ClientIP_""")"
+        w "["
+         s RunJobId="",countJob=0
+         for {
+	          s RunJobId=$o(@gl@(RunJobId))  
+	          q:RunJobId=""
+	          s countJob=countJob+1
+	          w:countJob'=1 ","
+              w "{""RunJobId"":"""_$ZCVT(RunJobId,"o","JS")_""""
+              s ind=""
+              for {
+	             s ind=$o(@gl@(RunJobId,ind))  
+	             q:ind=""
+	             w ","
+	             w """"_$ZCVT(ind,"o","JS")_""":"""_$ZCVT(@gl@(RunJobId,ind),"o","JS")_""""
+              }
+              w "}" 
+         }
+        w "]"
         Quit $$$OK
     }
     
