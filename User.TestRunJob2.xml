@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2013.1.4 (Build 801)" ts="2017-11-20 14:05:36">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2013.1.4 (Build 801)" ts="2017-11-20 14:57:15">
 <Class name="User.TestRunJob2">
 <Super>%CSP.Page</Super>
-<TimeChanged>64607,47025.635426</TimeChanged>
+<TimeChanged>64607,53780.755159</TimeChanged>
 <TimeCreated>64607,41585.694108</TimeCreated>
 
 <Method name="OnPage">
@@ -12,8 +12,8 @@
 	 ;  <script language="JavaScript" type="text/javascript" src="HTML.RunJob.cls"></script>
      ;  <script language="JavaScript" type="text/javascript" src="%25ZHTML.RunJob.cls"></script> 
 	  
-	&html<
-      <script language="JavaScript" type="text/javascript" src="HTML.RunJob.cls"></script>
+	&html< 
+      <script language="JavaScript" type="text/javascript" src="%25ZHTML.RunJob.cls"></script>
 	  <button onclick='runProcess()'>Запустить процесс</button>
 	  <button onclick='KillProcess()'>Уничтожить процесс</button>
 	  <br>
@@ -31,20 +31,19 @@
 	  <br>
 	  <script type="text/javascript" >
 	  
+	  
 	  // Синхронный запуск класс метода
 	  // alert(callJob("..Test2"));
 
 	  // Синхронный запуск класс метода(Полный путьм к классметоду)
-	  alert(callJob("User.TestRunJob.Test2"));
+	  alert(callJob("User.TestRunJob2.Test2"));
 	  
+	  alert(#call(..Test2())#);
 	  
-	  /// функция срабатывает по окончанию работы процесса
-	  CalBackFun=function(arg){
-		  // document.getElementById("FrmCache").innerHTML =JSON.stringify(arg);
-          document.getElementById("demo").innerHTML='';
-          if (''+arg=={}){     alert('Работа закончена')    }
-          document.getElementById("progress").value=0;
-	  }
+	  /// функция срабатывает перед вызовом класс метода
+	  beginFun=function(){
+		  
+	  } 
 	  
 	  /// функция обработки запроса состояния работы процесса
 	  ProgressFun=function(arg){
@@ -52,11 +51,20 @@
          if (arg.js!=undefined){  eval(arg.js);    }
          if (arg.UserJob!=undefined){  document.getElementById("KillProc").innerHTML = arg.UserJob;    }
 	  }
+	 
+	  /// функция срабатывает по окончанию работы процесса
+	  CalBackFun=function(arg){
+		  // document.getElementById("FrmCache").innerHTML =JSON.stringify(arg);
+          document.getElementById("demo").innerHTML='';
+          if (''+arg=={}){     alert('Работа закончена')    }
+          document.getElementById("progress").value=0;
+	  }
+	 
 	  
-	  var JobID="MYJoB2";
+	  var JobID="MYJoB_4";
 	  
 	  /// Параметры оработки запроса
-	  var param=[CalBackFun,ProgressFun,JobID,1000];
+	  var param=[beginFun,ProgressFun,CalBackFun,JobID,1000];
 	  /// запуск процесса повторно после перезагрузки страницы
 	  refJob(param);
 	  
@@ -92,7 +100,6 @@
 <Method name="Test">
 <ClassMethod>1</ClassMethod>
 <Implementation><![CDATA[
-	
 	; %runjob - имя глобала , через который происходит обмен Web морды и Cache` процесса
     s count=1000
     for a=1:1:count {   

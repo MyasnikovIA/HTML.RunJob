@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2013.1.4 (Build 801)" ts="2017-11-20 14:05:33">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2013.1.4 (Build 801)" ts="2017-11-20 14:57:12">
 <Class name="User.TestRunJob">
 <Super>%CSP.Page</Super>
-<TimeChanged>64607,48319.925682</TimeChanged>
+<TimeChanged>64607,52312.121552</TimeChanged>
 <TimeCreated>64605,50522.947038</TimeCreated>
 
 <Method name="OnPage">
@@ -13,7 +13,7 @@
      ;  <script language="JavaScript" type="text/javascript" src="%25ZHTML.RunJob.cls"></script> 
 	  
 	&html< 
-      <script language="JavaScript" type="text/javascript" src="HTML.RunJob.cls"></script>
+      <script language="JavaScript" type="text/javascript" src="%25ZHTML.RunJob.cls"></script>
 	  <button onclick='runProcess()'>Запустить процесс</button>
 	  <button onclick='KillProcess()'>Уничтожить процесс</button>
 	  <br>
@@ -37,14 +37,11 @@
 	  // Синхронный запуск класс метода(Полный путьм к классметоду)
 	  alert(callJob("User.TestRunJob.Test2"));
 	  
-	  
-	  /// функция срабатывает по окончанию работы процесса
-	  CalBackFun=function(arg){
-		  // document.getElementById("FrmCache").innerHTML =JSON.stringify(arg);
-          document.getElementById("demo").innerHTML='';
-          if (''+arg=={}){     alert('Работа закончена')    }
-          document.getElementById("progress").value=0;
-	  }
+	 
+	  /// функция срабатывает перед вызовом класс метода
+	  beginFun=function(){
+		  
+	  } 
 	  
 	  /// функция обработки запроса состояния работы процесса
 	  ProgressFun=function(arg){
@@ -52,11 +49,20 @@
          if (arg.js!=undefined){  eval(arg.js);    }
          if (arg.UserJob!=undefined){  document.getElementById("KillProc").innerHTML = arg.UserJob;    }
 	  }
+	 
+	  /// функция срабатывает по окончанию работы процесса
+	  CalBackFun=function(arg){
+		  // document.getElementById("FrmCache").innerHTML =JSON.stringify(arg);
+          document.getElementById("demo").innerHTML='';
+          if (''+arg=={}){     alert('Работа закончена')    }
+          document.getElementById("progress").value=0;
+	  }
+	 
 	  
-	  var JobID="MYJoB1";
+	  var JobID="MYJoB_3";
 	  
 	  /// Параметры оработки запроса
-	  var param=[CalBackFun,ProgressFun,JobID,1000];
+	  var param=[beginFun,ProgressFun,CalBackFun,JobID,1000];
 	  /// запуск процесса повторно после перезагрузки страницы
 	  refJob(param);
 	  

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2013.1.4 (Build 801)" ts="2017-11-20 14:05:27">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2013.1.4 (Build 801)" ts="2017-11-20 14:57:25">
 <Class name="Demo.RunJob.Test2">
 <Super>%CSP.Page</Super>
-<TimeChanged>64607,50319.925146</TimeChanged>
+<TimeChanged>64607,53152.93646</TimeChanged>
 <TimeCreated>64607,50308.774755</TimeCreated>
 
 <Method name="OnPage">
@@ -37,14 +37,11 @@
 	  // Синхронный запуск класс метода(Полный путьм к классметоду)
 	  alert(callJob("Demo.RunJob.Test2.Test2"));
 	  
-	  
-	  /// функция срабатывает по окончанию работы процесса
-	  CalBackFun=function(arg){
-		  // document.getElementById("FrmCache").innerHTML =JSON.stringify(arg);
-          document.getElementById("demo").innerHTML='';
-          if (''+arg=={}){     alert('Работа закончена')    }
-          document.getElementById("progress").value=0;
-	  }
+	 
+	  /// функция срабатывает перед вызовом класс метода
+	  beginFun=function(){
+		  
+	  } 
 	  
 	  /// функция обработки запроса состояния работы процесса
 	  ProgressFun=function(arg){
@@ -52,13 +49,26 @@
          if (arg.js!=undefined){  eval(arg.js);    }
          if (arg.UserJob!=undefined){  document.getElementById("KillProc").innerHTML = arg.UserJob;    }
 	  }
+	 
+	  /// функция срабатывает по окончанию работы процесса
+	  CalBackFun=function(arg){
+		  // document.getElementById("FrmCache").innerHTML =JSON.stringify(arg);
+          document.getElementById("demo").innerHTML='';
+          if (''+arg=={}){     alert('Работа закончена')    }
+          document.getElementById("progress").value=0;
+	  }
+	 
 	  
-	  var JobID="MYJoB_3";
+	  var JobID="MYJoB_2";
 	  
 	  /// Параметры оработки запроса
-	  var param=[CalBackFun,ProgressFun,JobID,1000];
+	  var param=[beginFun,ProgressFun,CalBackFun,JobID,1000];
+	 
+	 
 	  /// запуск процесса повторно после перезагрузки страницы
 	  refJob(param);
+	  
+	  
 	  
 	  runProcess=function(){
 	     var res=callJob("..Test",param);
