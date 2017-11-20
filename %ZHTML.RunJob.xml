@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2013.1.4 (Build 801)" ts="2017-11-20 15:19:14">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2017.1 (Build 792)" ts="2017-11-20 16:25:14">
 <Class name="%ZHTML.RunJob">
 <Description><![CDATA[
 <br>Скрипт(JS): 
@@ -7,7 +7,7 @@
 <br> 
 <br> <!--  <script language="JavaScript" type="text/javascript" src="%25ZHTML.RunJob.cls"></script>  -->]]></Description>
 <Super>%CSP.Page</Super>
-<TimeChanged>64607,54153.024539</TimeChanged>
+<TimeChanged>64607,58910.434594</TimeChanged>
 <TimeCreated>64607,52140.23416</TimeCreated>
 
 <Method name="ExecFrag">
@@ -370,6 +370,7 @@ errRunJob
        var FunBegin=null;
        var FunCallBack=null;
        var FunProgress=null;
+       var async=false;
        var arr=new Array();
        if ((''+callJob.arguments[1])=='[object Arguments]'){
           arr.push(callJob.arguments[0]);     
@@ -402,7 +403,10 @@ errRunJob
                    IntervalRunJobMilSec=obj[ind];
                }
             }
-        }
+            if (GlobalIDString==''){
+	            async=true ;
+            }
+         }
        }
        var data = "WARGC=" + (arr.length - 1) + "&WEVENT=" + MethodName.replace(/&amp;/,'&');
        for (i = 1; i < arr.length; i++) {
@@ -443,6 +447,7 @@ errRunJob
              LoopProgress(FunCallBack,FunProgress,GlobalIDString,IntervalRunJobMilSec);
            }
        }else{
+	     if (async==false) {
            var requestRunJob = new XMLHttpRequest();
            requestRunJob.open('POST', '%25ZHTML.RunJob.cls/?cspIntRunMethod=1', false);
            requestRunJob.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
@@ -454,6 +459,35 @@ errRunJob
 	          return {"error":requestRunJob.status}
            }
 	       idNewJob=requestRunJob.responseText;
+	     }else{
+		    /// интервал опроса состояния запроса (локально JS)
+		    var cspIntRunMethodRequest = new XMLHttpRequest();
+		    var myVarsetInterval=null;
+            var myStopFunctionsetInterval=function () { if (myVarsetInterval!=null){ clearTimeout(myVarsetInterval); }  }
+            if (FunProgress!=null){
+                  myVarsetInterval= setTimeout(function run() {
+                    FunProgress(cspIntRunMethodRequest);
+                    myVarsetInterval=setTimeout(run, IntervalRunJobMilSec);
+                  }, IntervalRunJobMilSec);
+            }
+            // Асинхронный запрос класс метода 
+            cspIntRunMethodRequest.open("POST", '%25ZHTML.RunJob.cls/?cspIntRunMethod=1', true);
+            cspIntRunMethodRequest.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            cspIntRunMethodRequest.onreadystatechange = function() {
+              if (this.readyState == 4 && this.status == 200) {
+                 if (typeof FunCallBack === 'function'){
+                     FunCallBack(this.responseText);
+                 }
+                 if (myVarsetInterval!=null){
+                     myStopFunctionsetInterval();
+                 }
+              };
+            };
+            cspIntRunMethodRequest.send(data);
+            if (FunBegin!=null){ FunBegin();}
+            idNewJob=cspIntRunMethodRequest; 
+	     }
+	       
        }
        
        return idNewJob;
@@ -542,7 +576,7 @@ errRunJob
      getJobList=function(){
         var ProgressObject={};
         var requestRunJob = new XMLHttpRequest();
-        requestRunJob.open('GET', 'HTML.RunJob.cls/?cspgetJobList=1', false);
+        requestRunJob.open('GET', '%25ZHTML.RunJob.cls/?cspgetJobList=1', false);
         requestRunJob.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
         requestRunJob.send(''); 
         if (requestRunJob.responseText.length==0){  return {};  }
@@ -558,7 +592,7 @@ errRunJob
      getAllJobList=function(){
 	    var ProgressObject={};
         var requestRunJob = new XMLHttpRequest();
-        requestRunJob.open('GET', 'HTML.RunJob.cls/?cspgetAllJobList=1', false);
+        requestRunJob.open('GET', '%25ZHTML.RunJob.cls/?cspgetAllJobList=1', false);
         requestRunJob.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
         requestRunJob.send(''); 
         if (requestRunJob.responseText.length==0){  return {};  }
@@ -569,6 +603,7 @@ errRunJob
         }
         return ProgressObject;
      }
+     
      if (typeof cspCallHttpServerMethod !== 'function') {
          cspCallHttpServerMethod=callJob;
      }
