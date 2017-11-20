@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2013.1.4 (Build 801)" ts="2017-11-20 14:57:05">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2017.1 (Build 792)" ts="2017-11-20 15:07:07">
 <Class name="%ZHTML.RunJob">
 <Description><![CDATA[
 <br>Скрипт(JS): 
 <br> &lt;script  type="text/javascript"  src='%25ZHTML.RunJob.cls'&gt;&lt;/script&gt; 
 <br> 
-<br> <!--  <script language="JavaScript" type="text/javascript" src="%25ZHTML.RunJob.cls"></script>  -->]]></Description>
+<br> <!--  <script language="JavaScript" type="text/javascript" src="%ZHTML.RunJob.cls"></script>  -->]]></Description>
 <Super>%CSP.Page</Super>
-<TimeChanged>64607,53630.692271</TimeChanged>
-<TimeCreated>64607,52140.23416</TimeCreated>
+<TimeChanged>64607,54421.138972</TimeChanged>
+<TimeCreated>64607,54421.138972</TimeCreated>
 
 <Method name="ExecFrag">
 <Description>
@@ -428,7 +428,6 @@ errRunJob
            requestRunJob.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
            requestRunJob.send(''); 
            if (requestRunJob.responseText=="OK") {
-	            if (FunBegin!=null){ FunBegin();  }
                 requestRunJob.open('POST', '%25ZHTML.RunJob.cls/?cspIntRunJob='+GlobalIDString, false);
                 requestRunJob.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
                 requestRunJob.send(data); 
@@ -440,6 +439,7 @@ errRunJob
                return {"error":requestRunJob.status}
              }
              var idNewJob=requestRunJob.responseText;
+             if (FunBegin!=null){ FunBegin();  }
              LoopProgress(FunCallBack,FunProgress,GlobalIDString,IntervalRunJobMilSec);
            }
        }else{

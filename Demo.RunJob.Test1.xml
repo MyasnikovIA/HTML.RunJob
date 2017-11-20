@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2013.1.4 (Build 801)" ts="2017-11-20 14:57:31">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2013.1.4 (Build 801)" ts="2017-11-20 15:03:07">
 <Class name="Demo.RunJob.Test1">
 <Super>%CSP.Page</Super>
-<TimeChanged>64607,52465.949074</TimeChanged>
+<TimeChanged>64607,54035.311312</TimeChanged>
 <TimeCreated>64607,29274.971308</TimeCreated>
 
 <Method name="OnPage">
@@ -62,7 +62,15 @@
 	  var JobID="MYJoB_1";
 	  
 	  /// Параметры оработки запроса
+	  // beginFun    - функция срабатывает перед запуском  классметода
+	  // ProgressFun - функция вызывается каждый раз после опроса состояния процеса
+	  // CalBackFun  - Функция работает после окончания работы классметода
+	  // JobID       - идентификатор создаваемого процесса
+	  // 1000        - интервал опроса состояния в мсек.
 	  var param=[beginFun,ProgressFun,CalBackFun,JobID,1000];
+	  
+	  
+	  
 	  /// запуск процесса повторно после перезагрузки страницы
 	  refJob(param);
 	  
