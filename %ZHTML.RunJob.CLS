@@ -1,0 +1,610 @@
+/// <br>Скрипт(JS): 
+/// <br> &lt;script  type="text/javascript"  src='%25ZHTML.RunJob.cls'&gt;&lt;/script&gt; 
+/// <br> 
+/// <br> <!--  <script language="JavaScript" type="text/javascript" src="%25ZHTML.RunJob.cls"></script>  -->
+Class %ZHTML.RunJob Extends %CSP.Page
+{
+
+/// d ##class(%ZHTML.RunJob).ExportSrvUDL()
+ClassMethod ExportSrvUDL(path = "")
+{
+   if $l(path)=0  d $system.OBJ.ExportUDL(##this_".CLS", "C:\TMP\"_##this_".CLS","/diffexport")
+   e  d $system.OBJ.ExportUDL(##this_".CLS", path,"/diffexport")
+}
+
+/// Метод разбики исходного текста на Cache` код и HTML текст
+ClassMethod ExecFrag(SrcCode = "", Beg = "", End = "")
+{
+     q:SrcCode=""   q:Beg=""    q:End=""    for ExecFragInd=1:1:$l(SrcCode,End){  s tmp=$p(SrcCode,End,ExecFragInd)   s Html=$p(tmp,Beg,1)     s Code=$p(tmp,Beg,2)   w Html   TRY {     x Code    } CATCH ErrorHandle {    zw ErrorHandle  }    }
+}
+
+ClassMethod DrawXdata(Name = {##This_":XDataContet"}) As %Library.Status [ Language = cache ]
+{
+   if $l(Name,":")=1,$e(Name,1,2)'=".."{  s Name=".."_Name  }
+   if $e(Name,1,2)=".." {  s ClassName=##This,XdataName=$e(Name,3,$l(Name))
+   }else{                  s ClassName=$p(Name,":",1),XdataName=$p(Name,":",2)  }
+   s gl="^oddDEF("""_ClassName_""",""x"","""_XdataName_""",21)"  
+   s FragOnPageInd=""  f {  s FragOnPageInd=$o(@gl@(FragOnPageInd))  q:FragOnPageInd=""  continue:FragOnPageInd=1  q:FragOnPageInd=@gl      d ..ExecFrag(@gl@(FragOnPageInd),"/*(",")*/")     w $c(13,10)  }
+}
+
+ClassMethod OnPreHTTP() As %Library.Boolean
+{
+     s %response.CharSet="CP1251"
+     if %request.Get("cspIntRunMethod",0)=1 {
+          if %response.ContentType="text/html" {
+            Do %response.SetHeader("Content-Type","text/plain")   
+          }
+         q 1   
+     }
+     if $d(%request.Data("cspIntRunJob")){             Do %response.SetHeader("Content-Type","application/javascript")  q 1  }
+     if $d(%request.Data("cspRunJobStatus")){  Do %response.SetHeader("Content-Type","application/javascript")  q 1  } 
+     if $d(%request.Data("cspKillRunJob")){       Do %response.SetHeader("Content-Type","application/javascript")  q 1  }
+
+     Do %response.SetHeader("Content-Type","application/javascript")   
+     q 1
+}
+
+ClassMethod OnPage() As %Status
+{
+    #define cspEncode(%k,%d)      $translate($System.Encryption.AESBase64Encode(%d,%k),"+=/"_$char(32,13,10),"_-$") 
+    #define cspDecode(%k,%d)      $System.Encryption.AESBase64Decode($translate(%d,"_-$","+=/"),%k) 
+    ; s I=$ZU(111,0)   
+    ; s  %ClientIP=$A(I,1)_"."_$A(I,2)_"."_$A(I,3)_"."_$A(I,4)
+    ; k I
+    s %ClientIP= $ZU(67, 15, $job)
+    if $d(%request.Data("cspIntRunMethod")){       
+	    s WEVENT=%request.Get("WEVENT","")
+	    if $l(WEVENT,".")=1 {
+           s WEVENT=$lg($$$cspDecode(%session.Key,WEVENT),1) 
+           s WEVENT=$p(WEVENT,":",1) ; ????
+	    }
+	    s %method=$p(WEVENT,".",$l(WEVENT,"."))
+        s %class=$e(WEVENT,1,$l(WEVENT)-$l(%method)-1)
+        if %class="."{
+            s:$d(%request.CgiEnvs("HTTP_REFERER")) %class= $SYSTEM.CSP.GetClassName(%request.CgiEnvs("HTTP_REFERER"))
+        }
+        s WEVENT=$c(1)_WEVENT
+        s WEVENT= $$$cspEncode(%session.Key,"1"_WEVENT)
+        d %request.Set("WEVENT",WEVENT)
+        s %sc=""
+        s %isNewMethod=1
+        d ..ExecRunMethod()
+        Quit $$$OK
+     }    
+    
+    
+    if $d(%request.Data("cspgetAllJobList")){  
+        s gl="^mtempRunJob"
+      
+       Quit $$$OK
+    }
+ 
+    if $d(%request.Data("cspgetJobList")){  
+        s gl="^mtempRunJob("""_%ClientIP_""")"
+        Quit $$$OK
+    }
+    
+    if $d(%request.Data("cspRunJobTest")){       
+        s %RunJobId =%request.Get("cspRunJobTest","")
+        if %RunJobId="" { w "OK" q $$$OK }
+        s gl="^mtempRunJob("""_%ClientIP_""","""_%RunJobId_""")"
+        if $d(@gl@("OK")),@gl@("OK")=0 {  
+            w "NO OK" q $$$OK 
+        }
+        if $d(@gl@("JOB")),@gl@("JOB")=0 {  
+          if $DATA(^$JOB(@gl@("JOB"))) {
+            w "NO OK" q $$$OK 
+          }
+        }
+        k @gl
+        w "OK"
+        q $$$OK 
+    }
+    
+    if $d(%request.Data("cspIntRunJob")){       
+         s WEVENT=%request.Get("WEVENT","")
+         if $l(WEVENT,".")=1 {
+           s WEVENT=$lg($$$cspDecode(%session.Key,WEVENT),1) 
+           s WEVENT=$p(WEVENT,":",1) ; ????
+         }
+         s %method=$p(WEVENT,".",$l(WEVENT,"."))
+        s %class=$e(WEVENT,1,$l(WEVENT)-$l(%method)-1)
+        if %class="."{
+            s:$d(%request.CgiEnvs("HTTP_REFERER")) %class= $SYSTEM.CSP.GetClassName(%request.CgiEnvs("HTTP_REFERER"))
+        }
+        s WEVENT=$c(1)_WEVENT
+        s WEVENT= $$$cspEncode(%session.Key,"1"_WEVENT)
+        d %request.Set("WEVENT",WEVENT)
+        s %RunJobId=%request.Get("cspIntRunJob","")
+        s %sc=""
+        s %isNewMethod=1
+        if %RunJobId="" {
+           s %RunJobId=$JOB_$tr($h,",")
+        }
+         d ..KillLOldGlobal(%RunJobId)
+        
+        s gl="^mtempRunJob("""_%ClientIP_""","""_%RunJobId_""")"
+        ; Запрещаем повторный запуск классметода в паралельном процессе
+         if $d(@gl@("GBL")),@gl@("OK")=0 {
+           w %RunJobId    
+           Quit $$$OK
+         }else{
+           ; k @gl
+         }
+        d ..ExecRunJobMethod(gl)
+        s %runjob="^mtempRunJob("""_%ClientIP_""","""_%RunJobId_""")"
+        w %RunJobId
+        Quit $$$OK
+     }
+     
+     
+     /// Проверка состояния процесса runJob
+     if $d(%request.Data("cspRunJobStatus")){
+        if %request.Get("cspRunJobStatus","")=""{
+	        w "{""error"":""Не указан идентификатор процесса"",""OK""=-1}"
+	        Quit $$$OK
+        } 
+        s %RunJobId=%request.Get("cspRunJobStatus","")
+        s gl="^mtempRunJob("""_%ClientIP_""","""_%RunJobId_""")"
+        if '$d(@gl){ w "{""error"":""Глобал с параметрами не найден"",""OK""=-1}"  Quit $$$OK  }
+        if '$d(@gl@("JOB")){ w "{""error"":""В глобале не указан идентификатор процесса"",""OK""=-1}"  Quit $$$OK  }
+        if $l(@gl@("JOB"))=0{ w "{""error"":""Идентификатор процесса пуст"",""OK""=-1}"  Quit $$$OK  }
+        if '$D(^$JOB(@gl@("JOB"))){  
+              if @gl@("OK")=1 {
+                 s ind="",count=0
+                 w "{"
+                 for {
+	                s ind=$o(@gl@(ind))  
+	                q:ind=""
+	                s count=count+1
+	                w:count'=1 ","
+	                w """"_$ZCVT(ind,"o","JS")_""":"""_$ZCVT(@gl@(ind),"o","JS")_""""
+                 }
+                 w "}"
+                 k @gl
+                 Quit $$$OK 
+               }
+               w "{""error"":""Процесс с номером "_@gl@("JOB")_" в системе не найден. "",""OK""=-1}"
+               k @gl
+               Quit $$$OK 
+        }
+        s @gl@("DatTim")=$ZDT($h)
+        s @gl@("Dat")=$p($h,",",1)
+        s @gl@("Tim")=$p($h,",",2)
+        s ind="",count=0
+        w "{"
+        for {
+	       s ind=$o(@gl@(ind))  
+	       q:ind=""
+	       s count=count+1
+	       w:count'=1 ","
+	       w """"_$ZCVT(ind,"o","JS")_""":"""_$ZCVT(@gl@(ind),"o","JS")_""""
+        }
+        w "}"
+        Quit $$$OK
+     }  
+      /// Уничтожение процесса runJob
+     if $d(%request.Data("cspKillRunJob")){
+        if %request.Get("cspKillRunJob","")=""{
+	        w "{""error"":""Не указан идентификатор процесса"",""OK""=-1}"
+	        Quit $$$OK
+        } 
+        s %RunJobId=%request.Get("cspKillRunJob","")
+        s gl="^mtempRunJob("""_%ClientIP_""","""_%RunJobId_""")"
+        if '$d(@gl){ w "{""error"":""Глобал с параметрами не найден"",""OK""=-1}"  Quit $$$OK  }
+        if '$d(@gl@("JOB")){ w "{""error"":""В глобале не указан идентификатор процесса"",""OK""=-1}"  Quit $$$OK  }
+        if $l(@gl@("JOB"))=0{ w "{""error"":""Идентификатор процесса пуст"",""OK""=-1}"  Quit $$$OK  }
+        if '$D(^$JOB(@gl@("JOB"))){   w "{""error"":""Процесс с номером "_@gl@("JOB")_" в системе не найден. "",""OK""=-1}" Quit $$$OK  }
+        d $zu(4,@gl@("JOB"))
+        s @gl@("OK")=-2
+        s ind="",count=0
+        w "{"
+        for {
+	       s ind=$o(@gl@(ind))  
+	       q:ind=""
+	       s count=count+1
+	       w:count'=1 ","
+	       w """"_$ZCVT(ind,"o","JS")_""":"""_$ZCVT(@gl@(ind),"o","JS")_""""
+        }
+        w "}"
+        Quit $$$OK
+     }  
+   
+     ; Выводим JS функции библиотеки
+     s ParentClassName1="%ZHTML.RunJob"
+     s MethodName="InitPreRunJob"
+     for ind=1:1:^oddDEF(ParentClassName1,"m",MethodName,30) {
+        d ..ExecFrag(^oddDEF(ParentClassName1,"m",MethodName,30,ind),"/*(",")*/") 
+        w $c(13,10)
+        ; w ^oddDEF(ParentClassName1,"m",MethodName,30,ind)_$c(13,10)
+     }
+     Quit $$$OK
+}
+
+ClassMethod ExecRunMethod()
+{
+     Set count=$Get(%request.Data("WARGC",1),0)
+     set args=count
+     s numArg=0
+     For i=1:1:count {
+          Set arg="WARG_"_i
+          If $Data(%request.Data(arg,1)) {
+               s numArg=numArg+1
+               set args(numArg) = %request.Data(arg,1)
+          } ElseIf $Data(%request.Data("WLIST"_i,1)) {
+               Set var="W"_i
+               For j=1:1:%request.Data("WLIST"_i,1) {
+                    If $Data(%request.Data(var,j)) {
+                         s numArg=numArg+1
+                         set args(numArg) = %request.Data(var,j)
+                    }
+               }
+          }
+     }
+     q:$l(%class,"%")>1 
+     if '$d(^oddDEF(%class,"m",%method,42)) {
+          do $classmethod(%class, %method, args...)
+     } Else {
+          w $classmethod(%class, %method, args...)
+     }
+}
+
+/// запуск класс метода в паралельном потоке
+ClassMethod ExecRunJobMethod(gl) As %String
+{
+     Set count=$Get(%request.Data("WARGC",1),0)
+     set @gl@("args")=count
+     s numArg=0
+     For i=1:1:count {
+        Set arg="WARG_"_i
+        If $Data(%request.Data(arg,1)) {
+           s numArg=numArg+1
+           set @gl@("args",numArg) = %request.Data(arg,1)
+        } ElseIf $Data(%request.Data("WLIST"_i,1)) {
+           Set var="W"_i
+           For j=1:1:%request.Data("WLIST"_i,1) {
+              If $Data(%request.Data(var,j)) {
+                 s numArg=numArg+1
+                 set @gl@("args",numArg) = %request.Data(var,j)
+              }
+           }
+        }
+     } 	
+     s @gl@("GBL")=gl
+     s @gl@("CLS")=%class
+     s @gl@("MET")=%method
+     s @gl@("IP")=%ClientIP
+     s @gl@("JobID")=%RunJobId
+     job ..runJobController(gl,%class, %method)
+     q gl
+}
+
+/// Метод работает в паралельном потоке runJob
+ClassMethod runJobController(gl, class, method) As %Status
+{
+   ; q:$d(@gl)  ; Если процесс уже работает, тогда выходим из процесса
+   s @gl@("JOB")=$job
+   s @gl@("DatTimStart")=$ZDT($h)
+   s @gl@("DatTim")=$ZDT($h)
+   s @gl@("Dat")=$p($h,",",1)
+   s @gl@("Tim")=$p($h,",",2)
+   s @gl@("OK")=0
+   s %runjob=gl
+   s ^deb($job)=gl
+ s $ZTRAP="errRunJob"
+   set args=@gl@("args")
+   for numArg=1:1:@gl@("args") {
+	   s val=@gl@("args",numArg)
+	   set args(numArg) = val
+   }
+   if args>0 {
+     do $classmethod(class, method, args...)
+   }else{
+     do $classmethod(class, method)
+   }
+   s @gl@("DatTimStop")=$ZDT($h)
+   s @gl@("OK")=1
+   q
+errRunJob
+   s @gl@("OK")=1   
+   s @gl@("error")=""""_$ZCVT($ZE,"O","JS")_""""   
+   q
+}
+
+/// Удаление старых глобалов
+ClassMethod KillLOldGlobal(RunJobId)
+{
+       s gl="^mtempRunJob("""_%ClientIP_""","""_RunJobId_""")"
+       s ind=""
+       for  {
+          s ind=$o(@gl@(ind))
+	      q:ind=""
+	      if '$d(@gl@(ind,"GBL"))   { k @gl@(ind)  continue } 
+	      if '$d(@gl@(ind,"JOB"))   { k @gl@(ind)  continue } 
+	      if '$d(@gl@(ind,"OK"))    { k @gl@(ind)  continue } 
+          if '$d(@gl@(ind,"DatTim")){ k @gl@(ind)  continue } 
+          if '$d(@gl@(ind,"Tim"))   { k @gl@(ind)  continue } 
+          if '$d(@gl@(ind,"Dat"))   { k @gl@(ind)  continue } 
+	      s PidJob=@gl@(ind,"JOB")
+          if '$DATA(^$JOB(PidJob))  { k @gl@(ind)  continue }
+       }
+}
+
+ClientMethod InitPreRunJob() [ Language = javascript, WebMethod ]
+{
+     // var ClientIP="/*( s I=$ZU(111,0)  w $A(I,1)_"."_$A(I,2)_"."_$A(I,3)_"."_$A(I,4) k I )*/";
+     // Класс %ZHTML.RunJob.cls
+     var IntervalRunJobMilSec=2000;
+     /**
+     *  callJob("User.test.MyClassMethod",[BeginFun,ProgressFun,CalBackFun,"UserJobId",IntervalProgress],arg1,Arg2);
+     *  callJob("..MyClassMethod",[BeginFun,ProgressFun,CalBackFun,"UserJobId",IntervalProgress],arg1,Arg2);
+     *  alert( callJob("..MyClassMethod",arg1,Arg2) );
+     *  Описание запроса:
+     *    "User.test.MyClassMethod" - имя класс метода
+     *    BeginFun                  - функция перед началом вызова 
+     *    ProgressFun               - функция опроса состояния
+     *    CalBackFun                - функция срабатывает по окончанию запроса
+     *    "UserJobId"               - Пользовательский идентификатор процесса
+     *    IntervalProgress          - Интервал в мсек. опроса состояния
+     *    arg1,Arg2...              - Перечисляем входные аргументы для класс метода (строки)
+     */
+     callJob=function(MethodName){
+       var GlobalIDString="";
+       var FunBegin=null;
+       var FunCallBack=null;
+       var FunProgress=null;
+       var async=false;
+       var arr=new Array();
+       if ((''+callJob.arguments[1])=='[object Arguments]'){
+          arr.push(callJob.arguments[0]);     
+          for(var ind in callJob.arguments[1]){if (callJob.arguments[1][ind]==undefined){continue;} arr.push(callJob.arguments[1][ind]); }   
+       }else{
+          for(var ind in callJob.arguments){if (callJob.arguments[ind]==undefined){continue;} arr.push(callJob.arguments[ind]); }   
+       }
+       var isCallQuery=false;
+       if (arr.length>1){
+          if ((typeof arr[1] === 'object')||(Array.isArray(arr[1]))) {
+            isCallQuery=true;
+            obj=arr[1];
+            arr.splice(1, 1);
+            var count=0;
+            for (ind in obj){
+               count++;
+               if ((count==1)&&(typeof obj[ind] === 'function')){
+                  FunBegin=obj[ind];
+               } 
+               if ((count==2)&&(typeof obj[ind] === 'function')){
+                   FunProgress=obj[ind];
+               } 
+               if ((count==3)&&(typeof obj[ind] === 'function')){
+                  FunCallBack=obj[ind];
+               } 
+               if (typeof obj[ind]  === 'string'){
+                  GlobalIDString=obj[ind];
+               } 
+               if (typeof obj[ind]  === 'number'){
+                   IntervalRunJobMilSec=obj[ind];
+               }
+            }
+            if (GlobalIDString==''){
+	            async=true ;
+            }
+         }
+       }
+       var data = "WARGC=" + (arr.length - 1) + "&WEVENT=" + MethodName.replace(/&amp;/,'&');
+       for (i = 1; i < arr.length; i++) {
+          arg = arr[i];
+          if (typeof arg != "object") {
+               // Convert boolean to Cache value before sending
+               if (typeof arg == "boolean") arg = (arg ? 1 : 0);
+               data = data + "&WARG_" + i + "=" + encodeURIComponent(arg);
+          } else if (arg != null) {
+               n = 0;
+               for (var el in arg) {
+                    if (typeof arg[el] != "function") {
+                         data = data + "&W" + i + "=" + encodeURIComponent(arg[el]);
+                         n = n + 1;
+                    }
+               }
+               data = data + "&WLIST" + i + "=" + n;
+          }
+       }
+       if (isCallQuery==true){
+           var requestRunJob = new XMLHttpRequest();
+           requestRunJob.open('GET', '%25ZHTML.RunJob.cls/?cspRunJobTest='+encodeURIComponent(GlobalIDString), false);
+           requestRunJob.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+           requestRunJob.send(''); 
+           if (requestRunJob.responseText=="OK") {
+                requestRunJob.open('POST', '%25ZHTML.RunJob.cls/?cspIntRunJob='+GlobalIDString, false);
+                requestRunJob.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                requestRunJob.send(data); 
+                requestRunJob.ontimeout = function (e) {
+                alert('Время ожидания ответа вышло!!!!');
+                return {"error":"Время ожидания ответа вышло"};
+             }
+             if (requestRunJob.status !== 200) {
+               return {"error":requestRunJob.status}
+             }
+             var idNewJob=requestRunJob.responseText;
+             if (FunBegin!=null){ FunBegin();  }
+             LoopProgress(FunCallBack,FunProgress,GlobalIDString,IntervalRunJobMilSec);
+           }
+       }else{
+	     if (async==false) {
+           var requestRunJob = new XMLHttpRequest();
+           requestRunJob.open('POST', '%25ZHTML.RunJob.cls/?cspIntRunMethod=1', false);
+           requestRunJob.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+           requestRunJob.send(data); 
+           requestRunJob.ontimeout = function (e) {
+             alert('Время ожидания ответа вышло!!!!');
+           }
+           if (requestRunJob.status !== 200) {
+	          return {"error":requestRunJob.status}
+           }
+	       idNewJob=requestRunJob.responseText;
+	     } else {
+		    /// интервал опроса состояния запроса (локально JS)
+		    var cspIntRunMethodRequest = new XMLHttpRequest();
+		    var myVarsetInterval=null;
+            var myStopFunctionsetInterval=function () { if (myVarsetInterval!=null){ clearTimeout(myVarsetInterval); }  }
+            if (FunProgress!=null){
+                  myVarsetInterval= setTimeout(function run() {
+                    FunProgress(cspIntRunMethodRequest);
+                    myVarsetInterval=setTimeout(run, IntervalRunJobMilSec);
+                  }, IntervalRunJobMilSec);
+            }
+            // Асинхронный запрос класс метода 
+            cspIntRunMethodRequest.open("POST", '%25ZHTML.RunJob.cls/?cspIntRunMethod=1', true);
+            cspIntRunMethodRequest.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            cspIntRunMethodRequest.onreadystatechange = function() {
+              if (this.readyState == 4 && this.status == 200) {
+                 if (typeof FunCallBack === 'function'){
+                     FunCallBack(this.responseText);
+                 }
+                 if (myVarsetInterval!=null){
+                     myStopFunctionsetInterval();
+                 }
+              };
+            };
+            cspIntRunMethodRequest.send(data);
+            if (FunBegin!=null){ FunBegin();}
+            idNewJob=cspIntRunMethodRequest; 
+	     }
+	       
+       }
+       
+       return idNewJob;
+     }
+     /**
+     *  Востановить состояние запроса после перезагрузки страницы
+     *  refJob([BeginFun,ProgressFun,CalBackFun,"UserJobId",IntervalProgress]);
+     *  Описание запроса:
+     *    BeginFun                  - функция перед началом вызова 
+     *    ProgressFun               - функция опроса состояния
+     *    CalBackFun                - функция срабатывает по окончанию запроса
+     *    "UserJobId"               - Пользовательский идентификатор процесса
+     *    IntervalProgress          - Интервал в мсек. опроса состояния
+     */
+     refJob=function(arr){
+       var GlobalIDString="";
+       var FunBegin=null;
+       var FunCallBack=null;
+       var FunProgress=null;
+       if ((typeof arr === 'object')||(Array.isArray(arr))) {
+	      var count=0;
+          for (ind in arr){
+               count++;
+               if ((count==1)&&(typeof arr[ind] === 'function')){
+                  FunBegin=arr[ind];
+               } 
+               if ((count==2)&&(typeof arr[ind] === 'function')){
+                   FunProgress=arr[ind];
+               } 
+               if ((count==3)&&(typeof arr[ind] === 'function')){
+                  FunCallBack=arr[ind];
+               } 
+               if (typeof arr[ind]  === 'string'){
+                  GlobalIDString=arr[ind];
+               } 
+               if (typeof arr[ind]  === 'number'){
+                   IntervalRunJobMilSec=arr[ind];
+               }
+          }
+          if (FunBegin!=null){ FunBegin();  }
+          LoopProgress(FunCallBack,FunProgress,GlobalIDString,IntervalRunJobMilSec);
+       }
+     }
+     
+     
+     
+     LoopProgress=function(FunCallBack,FunProgress,GlobalIDString,IntervalRunJobMilSec){
+	   var requestLoop = new XMLHttpRequest();
+       var myVarsetInterval;
+       myVarsetInterval= setTimeout(
+          function runJobLocalLoop() {
+           var ProgressObject={};
+           ProgressObject['OK']=0;
+           requestLoop.open('GET', '%25ZHTML.RunJob.cls/?cspRunJobStatus='+encodeURIComponent(GlobalIDString), false);
+           requestLoop.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+           requestLoop.send(''); 
+           if (requestLoop.responseText.length==0){   FunCallBack({"error":"Работа процесса прервана"});    clearTimeout(myVarsetInterval);  return;  }
+           try{ ProgressObject=JSON.parse(requestLoop.responseText) }catch (e) { 
+               FunCallBack(e);
+               clearTimeout(myVarsetInterval);  return;  
+           }
+           if ( JSON.stringify(ProgressObject)==="{}"){
+	              FunCallBack({"error":"Работа процесса прервана"});
+	              clearTimeout(myVarsetInterval);  return;  
+	       }
+           if (ProgressObject['OK']!=0){
+	            if (FunProgress!=null){  FunProgress(ProgressObject);  }
+	            if (FunCallBack!=null){  FunCallBack(ProgressObject);  }
+                clearTimeout(myVarsetInterval); 
+                return; 
+            }
+            if (FunProgress!=null){  FunProgress(ProgressObject);  }
+           myVarsetInterval=setTimeout(runJobLocalLoop, IntervalRunJobMilSec);
+       }, IntervalRunJobMilSec);
+     }
+
+
+     killJob=function(GlobalIDString){
+        var ProgressObject={};
+        var requestRunJob = new XMLHttpRequest();
+        requestRunJob.open('GET', '%25ZHTML.RunJob.cls/?cspKillRunJob='+GlobalIDString, false);
+        requestRunJob.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        requestRunJob.send(''); 
+        if (requestRunJob.responseText.length==0){  return {};  }
+        try{
+	       ProgressObject=JSON.parse(requestRunJob.responseText);
+        }catch (e) { 
+           return {} ;  
+        }
+        return ProgressObject;
+     }
+     
+     
+     /// Получить список запущеных процессов
+     getJobList=function(){
+        var ProgressObject={};
+        var requestRunJob = new XMLHttpRequest();
+        requestRunJob.open('GET', '%25ZHTML.RunJob.cls/?cspgetJobList=1', false);
+        requestRunJob.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        requestRunJob.send(''); 
+        if (requestRunJob.responseText.length==0){  return {};  }
+        try{
+	       ProgressObject=JSON.parse(requestRunJob.responseText);
+        }catch (e) { 
+           return {} ;  
+        }
+        return ProgressObject;
+     }
+     
+     /// Получить полный список 
+     getAllJobList=function(){
+	    var ProgressObject={};
+        var requestRunJob = new XMLHttpRequest();
+        requestRunJob.open('GET', '%25ZHTML.RunJob.cls/?cspgetAllJobList=1', false);
+        requestRunJob.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        requestRunJob.send(''); 
+        if (requestRunJob.responseText.length==0){  return {};  }
+        try{
+	       ProgressObject=JSON.parse(requestRunJob.responseText);
+        }catch (e) { 
+           return {} ;  
+        }
+        return ProgressObject;
+     }
+     
+     /// var res=#server(..Test())#;
+     if (typeof cspCallHttpServerMethod !== 'function') {
+         cspCallHttpServerMethod=callJob;
+     }
+     /// #call(..Test())# 
+     if (typeof cspHttpServerMethod !== 'function') {
+        cspHttpServerMethod=callJob;
+     }
+}
+
+}
+
