@@ -1,11 +1,11 @@
 /// <br>Скрипт(JS): 
-/// <br> &lt;script  type="text/javascript"  src='%25ZHTML.RunJob.cls'&gt;&lt;/script&gt; 
+/// <br> &lt;script  type="text/javascript"  src='HTML.RunJob.cls'&gt;&lt;/script&gt; 
 /// <br> 
-/// <br> <!--  <script language="JavaScript" type="text/javascript" src="%25ZHTML.RunJob.cls"></script>  -->
-Class %ZHTML.RunJob Extends %CSP.Page
+/// <br> <!--  <script language="JavaScript" type="text/javascript" src="HTML.RunJob.cls"></script>  -->
+Class HTML.RunJob Extends %CSP.Page
 {
 
-/// d ##class(%ZHTML.RunJob).ExportUDL()
+/// d ##class(HTML.RunJob).ExportUDL()
 ClassMethod ExportUDL(path = "")
 {
    if $l(path)=0  d $system.OBJ.ExportUDL(##this_".CLS", "C:\TMP\"_##this_".CLS","/diffexport")
@@ -29,7 +29,7 @@ ClassMethod DrawXdata(Name = {##This_":XDataContet"}) As %Library.Status [ Langu
 
 ClassMethod OnPreHTTP() As %Library.Boolean
 {
-     s %response.CharSet="CP1251"
+     ; s %response.CharSet="CP1251"
      if %request.Get("cspIntRunMethod",0)=1 {
           if %response.ContentType="text/html" {
             Do %response.SetHeader("Content-Type","text/plain")   
@@ -48,9 +48,9 @@ ClassMethod OnPage() As %Status
 {
     #define cspEncode(%k,%d)      $translate($System.Encryption.AESBase64Encode(%d,%k),"+=/"_$char(32,13,10),"_-$") 
     #define cspDecode(%k,%d)      $System.Encryption.AESBase64Decode($translate(%d,"_-$","+=/"),%k) 
-    ; s I=$ZU(111,0)   
-    ; s  %ClientIP=$A(I,1)_"."_$A(I,2)_"."_$A(I,3)_"."_$A(I,4)
-    ; k I
+   ;  s I=$ZU(111,0)   
+   ;  s %ClientIP=$A(I,1)_"."_$A(I,2)_"."_$A(I,3)_"."_$A(I,4)
+   ;  k I
     s %ClientIP= $ZU(67, 15, $job)
     if $d(%request.Data("cspIntRunMethod")){       
 	    s WEVENT=%request.Get("WEVENT","")
@@ -75,12 +75,29 @@ ClassMethod OnPage() As %Status
     
     if $d(%request.Data("cspgetAllJobList")){  
         s gl="^mtempRunJob"
-      
        Quit $$$OK
     }
  
     if $d(%request.Data("cspgetJobList")){  
         s gl="^mtempRunJob("""_%ClientIP_""")"
+        w "["
+         s RunJobId="",countJob=0
+         for {
+	          s RunJobId=$o(@gl@(RunJobId))  
+	          q:RunJobId=""
+	          s countJob=countJob+1
+	          w:countJob'=1 ","
+              w "{""RunJobId"":"""_$ZCVT(RunJobId,"o","JS")_""""
+              s ind=""
+              for {
+	             s ind=$o(@gl@(RunJobId,ind))  
+	             q:ind=""
+	             w ","
+	             w """"_$ZCVT(ind,"o","JS")_""":"""_$ZCVT(@gl@(RunJobId,ind),"o","JS")_""""
+              }
+              w "}" 
+         }
+        w "]"
         Quit $$$OK
     }
     
@@ -211,7 +228,7 @@ ClassMethod OnPage() As %Status
      }  
    
      ; Выводим JS функции библиотеки
-     s ParentClassName1="%ZHTML.RunJob"
+     s ParentClassName1="HTML.RunJob"
      s MethodName="InitPreRunJob"
      for ind=1:1:^oddDEF(ParentClassName1,"m",MethodName,30) {
         d ..ExecFrag(^oddDEF(ParentClassName1,"m",MethodName,30,ind),"/*(",")*/") 
@@ -241,7 +258,7 @@ ClassMethod ExecRunMethod()
                }
           }
      }
-     q:$l(%class,"%")>1 
+     
      if '$d(^oddDEF(%class,"m",%method,42)) {
           do $classmethod(%class, %method, args...)
      } Else {
@@ -332,22 +349,8 @@ ClassMethod KillLOldGlobal(RunJobId)
 
 ClientMethod InitPreRunJob() [ Language = javascript, WebMethod ]
 {
-     // var ClientIP="/*( s I=$ZU(111,0)  w $A(I,1)_"."_$A(I,2)_"."_$A(I,3)_"."_$A(I,4) k I )*/";
-     // Класс %ZHTML.RunJob.cls
+    //ddd var ClientIP="/*( s I=$ZU(111,0)  w $A(I,1)_"."_$A(I,2)_"."_$A(I,3)_"."_$A(I,4) k I )*/";
      var IntervalRunJobMilSec=2000;
-     /**
-     *  callJob("User.test.MyClassMethod",[BeginFun,ProgressFun,CalBackFun,"UserJobId",IntervalProgress],arg1,Arg2);
-     *  callJob("..MyClassMethod",[BeginFun,ProgressFun,CalBackFun,"UserJobId",IntervalProgress],arg1,Arg2);
-     *  alert( callJob("..MyClassMethod",arg1,Arg2) );
-     *  Описание запроса:
-     *    "User.test.MyClassMethod" - имя класс метода
-     *    BeginFun                  - функция перед началом вызова 
-     *    ProgressFun               - функция опроса состояния
-     *    CalBackFun                - функция срабатывает по окончанию запроса
-     *    "UserJobId"               - Пользовательский идентификатор процесса
-     *    IntervalProgress          - Интервал в мсек. опроса состояния
-     *    arg1,Arg2...              - Перечисляем входные аргументы для класс метода (строки)
-     */
      callJob=function(MethodName){
        var GlobalIDString="";
        var FunBegin=null;
@@ -411,11 +414,11 @@ ClientMethod InitPreRunJob() [ Language = javascript, WebMethod ]
        }
        if (isCallQuery==true){
            var requestRunJob = new XMLHttpRequest();
-           requestRunJob.open('GET', '%25ZHTML.RunJob.cls/?cspRunJobTest='+encodeURIComponent(GlobalIDString), false);
+           requestRunJob.open('GET', 'HTML.RunJob.cls/?cspRunJobTest='+encodeURIComponent(GlobalIDString), false);
            requestRunJob.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
            requestRunJob.send(''); 
            if (requestRunJob.responseText=="OK") {
-                requestRunJob.open('POST', '%25ZHTML.RunJob.cls/?cspIntRunJob='+GlobalIDString, false);
+                requestRunJob.open('POST', 'HTML.RunJob.cls/?cspIntRunJob='+GlobalIDString, false);
                 requestRunJob.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
                 requestRunJob.send(data); 
                 requestRunJob.ontimeout = function (e) {
@@ -432,7 +435,7 @@ ClientMethod InitPreRunJob() [ Language = javascript, WebMethod ]
        }else{
 	     if (async==false) {
            var requestRunJob = new XMLHttpRequest();
-           requestRunJob.open('POST', '%25ZHTML.RunJob.cls/?cspIntRunMethod=1', false);
+           requestRunJob.open('POST', 'HTML.RunJob.cls/?cspIntRunMethod=1', false);
            requestRunJob.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
            requestRunJob.send(data); 
            requestRunJob.ontimeout = function (e) {
@@ -442,7 +445,7 @@ ClientMethod InitPreRunJob() [ Language = javascript, WebMethod ]
 	          return {"error":requestRunJob.status}
            }
 	       idNewJob=requestRunJob.responseText;
-	     } else {
+	     }else{
 		    /// интервал опроса состояния запроса (локально JS)
 		    var cspIntRunMethodRequest = new XMLHttpRequest();
 		    var myVarsetInterval=null;
@@ -454,7 +457,7 @@ ClientMethod InitPreRunJob() [ Language = javascript, WebMethod ]
                   }, IntervalRunJobMilSec);
             }
             // Асинхронный запрос класс метода 
-            cspIntRunMethodRequest.open("POST", '%25ZHTML.RunJob.cls/?cspIntRunMethod=1', true);
+            cspIntRunMethodRequest.open("POST", 'HTML.RunJob.cls/?cspIntRunMethod=1', true);
             cspIntRunMethodRequest.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
             cspIntRunMethodRequest.onreadystatechange = function() {
               if (this.readyState == 4 && this.status == 200) {
@@ -475,16 +478,7 @@ ClientMethod InitPreRunJob() [ Language = javascript, WebMethod ]
        
        return idNewJob;
      }
-     /**
-     *  Востановить состояние запроса после перезагрузки страницы
-     *  refJob([BeginFun,ProgressFun,CalBackFun,"UserJobId",IntervalProgress]);
-     *  Описание запроса:
-     *    BeginFun                  - функция перед началом вызова 
-     *    ProgressFun               - функция опроса состояния
-     *    CalBackFun                - функция срабатывает по окончанию запроса
-     *    "UserJobId"               - Пользовательский идентификатор процесса
-     *    IntervalProgress          - Интервал в мсек. опроса состояния
-     */
+     
      refJob=function(arr){
        var GlobalIDString="";
        var FunBegin=null;
@@ -524,7 +518,7 @@ ClientMethod InitPreRunJob() [ Language = javascript, WebMethod ]
           function runJobLocalLoop() {
            var ProgressObject={};
            ProgressObject['OK']=0;
-           requestLoop.open('GET', '%25ZHTML.RunJob.cls/?cspRunJobStatus='+encodeURIComponent(GlobalIDString), false);
+           requestLoop.open('GET', 'HTML.RunJob.cls/?cspRunJobStatus='+encodeURIComponent(GlobalIDString), false);
            requestLoop.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
            requestLoop.send(''); 
            if (requestLoop.responseText.length==0){   FunCallBack({"error":"Работа процесса прервана"});    clearTimeout(myVarsetInterval);  return;  }
@@ -551,7 +545,7 @@ ClientMethod InitPreRunJob() [ Language = javascript, WebMethod ]
      killJob=function(GlobalIDString){
         var ProgressObject={};
         var requestRunJob = new XMLHttpRequest();
-        requestRunJob.open('GET', '%25ZHTML.RunJob.cls/?cspKillRunJob='+GlobalIDString, false);
+        requestRunJob.open('GET', 'HTML.RunJob.cls/?cspKillRunJob='+GlobalIDString, false);
         requestRunJob.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
         requestRunJob.send(''); 
         if (requestRunJob.responseText.length==0){  return {};  }
@@ -568,7 +562,7 @@ ClientMethod InitPreRunJob() [ Language = javascript, WebMethod ]
      getJobList=function(){
         var ProgressObject={};
         var requestRunJob = new XMLHttpRequest();
-        requestRunJob.open('GET', '%25ZHTML.RunJob.cls/?cspgetJobList=1', false);
+        requestRunJob.open('GET', 'HTML.RunJob.cls/?cspgetJobList=1', false);
         requestRunJob.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
         requestRunJob.send(''); 
         if (requestRunJob.responseText.length==0){  return {};  }
@@ -584,7 +578,7 @@ ClientMethod InitPreRunJob() [ Language = javascript, WebMethod ]
      getAllJobList=function(){
 	    var ProgressObject={};
         var requestRunJob = new XMLHttpRequest();
-        requestRunJob.open('GET', '%25ZHTML.RunJob.cls/?cspgetAllJobList=1', false);
+        requestRunJob.open('GET', 'HTML.RunJob.cls/?cspgetAllJobList=1', false);
         requestRunJob.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
         requestRunJob.send(''); 
         if (requestRunJob.responseText.length==0){  return {};  }
@@ -596,13 +590,8 @@ ClientMethod InitPreRunJob() [ Language = javascript, WebMethod ]
         return ProgressObject;
      }
      
-     /// var res=#server(..Test())#;
      if (typeof cspCallHttpServerMethod !== 'function') {
          cspCallHttpServerMethod=callJob;
-     }
-     /// #call(..Test())# 
-     if (typeof cspHttpServerMethod !== 'function') {
-        cspHttpServerMethod=callJob;
      }
 }
 
