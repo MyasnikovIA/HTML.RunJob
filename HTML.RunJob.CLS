@@ -5,6 +5,10 @@
 Class HTML.RunJob Extends %CSP.Page
 {
 
+/// <br>   s %response.CharSet="CP1251" 
+/// <br>   "CP1251" или "UTF-8"
+Parameter CodePage = "UTF-8";
+
 /// d ##class(HTML.RunJob).ExportUDL()
 ClassMethod ExportUDL(path = "")
 {
@@ -20,6 +24,7 @@ ClassMethod ExecFrag(SrcCode = "", Beg = "", End = "")
 
 ClassMethod DrawXdata(Name = {##This_":XDataContet"}) As %Library.Status [ Language = cache ]
 {
+ 
    if $l(Name,":")=1,$e(Name,1,2)'=".."{  s Name=".."_Name  }
    if $e(Name,1,2)=".." {  s ClassName=##This,XdataName=$e(Name,3,$l(Name))
    }else{                  s ClassName=$p(Name,":",1),XdataName=$p(Name,":",2)  }
@@ -29,7 +34,9 @@ ClassMethod DrawXdata(Name = {##This_":XDataContet"}) As %Library.Status [ Langu
 
 ClassMethod OnPreHTTP() As %Library.Boolean
 {
-     ; s %response.CharSet="CP1251"
+	 ; s %response.CharSet="CP1251" 
+	 ; s %response.CharSet="UTF-8" 
+     s:$l(..#CodePage)>0 %response.CharSet=..#CodePage  ; для ПК Сироена
      if %request.Get("cspIntRunMethod",0)=1 {
           if %response.ContentType="text/html" {
             Do %response.SetHeader("Content-Type","text/plain")   
@@ -39,7 +46,6 @@ ClassMethod OnPreHTTP() As %Library.Boolean
      if $d(%request.Data("cspIntRunJob")){             Do %response.SetHeader("Content-Type","application/javascript")  q 1  }
      if $d(%request.Data("cspRunJobStatus")){  Do %response.SetHeader("Content-Type","application/javascript")  q 1  } 
      if $d(%request.Data("cspKillRunJob")){       Do %response.SetHeader("Content-Type","application/javascript")  q 1  }
-
      Do %response.SetHeader("Content-Type","application/javascript")   
      q 1
 }
@@ -247,13 +253,23 @@ ClassMethod ExecRunMethod()
           Set arg="WARG_"_i
           If $Data(%request.Data(arg,1)) {
                s numArg=numArg+1
-               set args(numArg) = %request.Data(arg,1)
+               ; set args(numArg) = %request.Data(arg,1)
+               if $isObject(%request.Data(arg,1)) {
+                  set args(numArg) = %request.Data(arg,1)
+               }else{
+	              set args(numArg) = $zcvt(%request.Data(arg,1),"I",$tr(..#CodePage,"-",""))
+               }
           } ElseIf $Data(%request.Data("WLIST"_i,1)) {
                Set var="W"_i
                For j=1:1:%request.Data("WLIST"_i,1) {
                     If $Data(%request.Data(var,j)) {
-                         s numArg=numArg+1
-                         set args(numArg) = %request.Data(var,j)
+                        s numArg=numArg+1
+                        ; set args(numArg) = %request.Data(var,j)
+                        if $isObject(%request.Data(var,j)) {
+                          set args(numArg) = %request.Data(var,j)
+                        }else{
+                          set args(numArg) = $zcvt(%request.Data(var,j),"I",$tr(..#CodePage,"-",""))
+                        }
                     }
                }
           }
@@ -264,6 +280,7 @@ ClassMethod ExecRunMethod()
      } Else {
           w $classmethod(%class, %method, args...)
      }
+     q
 }
 
 /// запуск класс метода в паралельном потоке
@@ -276,13 +293,13 @@ ClassMethod ExecRunJobMethod(gl) As %String
         Set arg="WARG_"_i
         If $Data(%request.Data(arg,1)) {
            s numArg=numArg+1
-           set @gl@("args",numArg) = %request.Data(arg,1)
+           set @gl@("args",numArg) = $zcvt(%request.Data(arg,1),"I",$tr(..#CodePage,"-",""))
         } ElseIf $Data(%request.Data("WLIST"_i,1)) {
            Set var="W"_i
            For j=1:1:%request.Data("WLIST"_i,1) {
               If $Data(%request.Data(var,j)) {
                  s numArg=numArg+1
-                 set @gl@("args",numArg) = %request.Data(var,j)
+                 set @gl@("args",numArg) =$zcvt(%request.Data(var,j),"I",$tr(..#CodePage,"-","")) 
               }
            }
         }
@@ -429,8 +446,7 @@ ClientMethod InitPreRunJob() [ Language = javascript, WebMethod ]
                return {"error":requestRunJob.status}
              }
              var idNewJob=requestRunJob.responseText;
-             if (FunBegin!=null){ FunBegin();  }
-             LoopProgress(FunCallBack,FunProgress,GlobalIDString,IntervalRunJobMilSec);
+             LoopProgress(FunCallBack,FunProgress,GlobalIDString,IntervalRunJobMilSec,FunBegin);
            }
        }else{
 	     if (async==false) {
@@ -453,6 +469,7 @@ ClientMethod InitPreRunJob() [ Language = javascript, WebMethod ]
             if (FunProgress!=null){
                   myVarsetInterval= setTimeout(function run() {
                     FunProgress(cspIntRunMethodRequest);
+                    // if (cspIntRunMethodRequest.js!=undefined){ try {eval(cspIntRunMethodRequest.js); } catch (err) { }  /*delete cspIntRunMethodRequest.js; */   }
                     myVarsetInterval=setTimeout(run, IntervalRunJobMilSec);
                   }, IntervalRunJobMilSec);
             }
@@ -504,18 +521,22 @@ ClientMethod InitPreRunJob() [ Language = javascript, WebMethod ]
                    IntervalRunJobMilSec=arr[ind];
                }
           }
-          if (FunBegin!=null){ FunBegin();  }
-          LoopProgress(FunCallBack,FunProgress,GlobalIDString,IntervalRunJobMilSec);
+          LoopProgress(FunCallBack,FunProgress,GlobalIDString,IntervalRunJobMilSec,FunBegin);
        }
      }
      
      
      
-     LoopProgress=function(FunCallBack,FunProgress,GlobalIDString,IntervalRunJobMilSec){
+     LoopProgress=function(FunCallBack,FunProgress,GlobalIDString,IntervalRunJobMilSec,FunBegin){
 	   var requestLoop = new XMLHttpRequest();
+	   var CountLoopRunJob=0
        var myVarsetInterval;
        myVarsetInterval= setTimeout(
           function runJobLocalLoop() {
+	       CountLoopRunJob++;
+	       if (CountLoopRunJob==1){
+	          if (FunBegin!=null){ FunBegin();  }
+	       }
            var ProgressObject={};
            ProgressObject['OK']=0;
            requestLoop.open('GET', 'HTML.RunJob.cls/?cspRunJobStatus='+encodeURIComponent(GlobalIDString), false);
@@ -531,8 +552,13 @@ ClientMethod InitPreRunJob() [ Language = javascript, WebMethod ]
 	              clearTimeout(myVarsetInterval);  return;  
 	       }
            if (ProgressObject['OK']!=0){
-	            if (FunProgress!=null){  FunProgress(ProgressObject);  }
-	            if (FunCallBack!=null){  FunCallBack(ProgressObject);  }
+	            if (FunProgress!=null){ 
+	                FunProgress(ProgressObject); 
+                    // if (ProgressObject.js!=undefined){ try {eval(ProgressObject.js); } catch (err) { }   delete ProgressObject.js;    }
+	            }
+	            if (FunCallBack!=null){  
+	                FunCallBack(ProgressObject);  
+	            }
                 clearTimeout(myVarsetInterval); 
                 return; 
             }
@@ -590,8 +616,13 @@ ClientMethod InitPreRunJob() [ Language = javascript, WebMethod ]
         return ProgressObject;
      }
      
+     /// #call(..Test())# 
      if (typeof cspCallHttpServerMethod !== 'function') {
          cspCallHttpServerMethod=callJob;
+     }
+     /// var res=#server(..Test())#;
+     if (typeof cspHttpServerMethod !== 'function') {
+        cspHttpServerMethod=callJob;
      }
 }
 
